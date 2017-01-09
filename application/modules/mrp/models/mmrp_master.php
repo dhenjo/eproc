@@ -10,7 +10,7 @@ class Mmrp_master extends CI_Model {
     
     function get_supplier_inventory($id_mrp_supplier = 0){
     
-        $where = "WHERE 1=1 AND A.id_mrp_supplier = '{$id_mrp_supplier}'";
+        $where = "WHERE 1=1 AND A.status=1 AND A.id_mrp_supplier = '{$id_mrp_supplier}'";
         
       $data = $this->global_models->get_query("SELECT  A.id_mrp_supplier_inventory,A.id_mrp_supplier,A.harga,A.tanggal,A.status"
         . ",D.name AS inventory_umum,F.code AS type,E.title AS brand,G.title AS satuan,C.jenis,C.title AS title_spesifik"
@@ -41,17 +41,18 @@ class Mmrp_master extends CI_Model {
 							 ->setCategory("Supplier Inventory");
 
       $objPHPExcel->setActiveSheetIndex(0);
-      
-      $objPHPExcel->getActiveSheet()->mergeCells('A1:D3');
-      $objPHPExcel->getActiveSheet()->setCellValue('A1', 'Supplier Inventory ');
-      $objPHPExcel->getActiveSheet()->getStyle('A1:D3')->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID);
+      $nama_supplier = $this->global_models->get_field("mrp_supplier", "name", 
+                    array("id_mrp_supplier" => $id_supplier));
+      $objPHPExcel->getActiveSheet()->mergeCells('A1:G2');
+      $objPHPExcel->getActiveSheet()->setCellValue('A1', "Supplier Inventory {$nama_supplier}");
+      $objPHPExcel->getActiveSheet()->getStyle('A1:G2')->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID);
   
 //      $objPHPExcel->getActiveSheet()->getStyle('A1:V2')->getFill()->getStartColor()->setARGB('FF808080');
-      $objPHPExcel->getActiveSheet()->getStyle('A1:D3')->applyFromArray(
+      $objPHPExcel->getActiveSheet()->getStyle('A1:G2')->applyFromArray(
           array(
             'font'    => array(
               'bold'      => true,
-               'size'  => 24,
+               'size'  => 18,
               'name'  => 'Verdana'
               
             ),
@@ -67,12 +68,15 @@ class Mmrp_master extends CI_Model {
             )
           )
       );
-      $objPHPExcel->getActiveSheet()->setCellValue('A5', 'NO');
-      $objPHPExcel->getActiveSheet()->setCellValue('B5', 'Inventory Spesifik');
-      $objPHPExcel->getActiveSheet()->setCellValue('C5', 'Harga');
-      $objPHPExcel->getActiveSheet()->setCellValue('D5', 'Tanggal');
+      $objPHPExcel->getActiveSheet()->setCellValue('A3', 'Nama Umum');
+      $objPHPExcel->getActiveSheet()->setCellValue('B3', 'Nama Spesifik');
+      $objPHPExcel->getActiveSheet()->setCellValue('C3', 'Type');
+      $objPHPExcel->getActiveSheet()->setCellValue('D3', 'Jenis');
+      $objPHPExcel->getActiveSheet()->setCellValue('E3', 'Brand');
+      $objPHPExcel->getActiveSheet()->setCellValue('F3', 'Satuan');
+      $objPHPExcel->getActiveSheet()->setCellValue('G3', 'Harga');
       
-      $objPHPExcel->getActiveSheet()->getStyle('A5:D5')->applyFromArray(
+      $objPHPExcel->getActiveSheet()->getStyle('A3:G3')->applyFromArray(
           array(
             'font'    => array(
               'bold'      => true
@@ -116,49 +120,57 @@ class Mmrp_master extends CI_Model {
             $no = $no + 1;
            
         if($da->title_spesifik){
-            $title_spesifik2 = " ".$da->title_spesifik;
+            $title_spesifik2 = $da->title_spesifik;
         }else{
             $title_spesifik2 = "";
         }
         
         if($da->jenis){
-            $jenis2 = " [Jenis Barang:".$jenis[$da->jenis]."]";
+            $jenis2 = $jenis[$da->jenis];
         }else{
             $jenis2 = "";
         }
-        
-        if($da->typ){
-            $type2 = " [Type:".$da->type."]";
+      
+        if($da->type){
+            $type2 = $da->type;
         }else{
             $type2 ="";
         }
         
         if($da->brand){
-           $brand = " [Brand:".$da->brand."]";
+           $brand = $da->brand;
         }else{
             $brand = "";
         }
         
         if($da->satuan){
-           $satuan = " [Satuan:".$da->satuan."]";
+           $satuan = $da->satuan;
         }else{
-            $satuan = " [Satuan:".$da->satuan."]";
+            $satuan = "";
         }
         
-        $tgl = date("d F Y", strtotime($da->tanggal));
+//        $tgl = date("d F Y", strtotime($da->tanggal));
        
              
-            $objPHPExcel->getActiveSheet()->setCellValue('A'.(6+$key),$no);
-            $objPHPExcel->getActiveSheet()->setCellValue('B'.(6+$key),$da->inventory_umum.$title_spesifik2.$jenis2.$type2.$brand.$satuan);
-            $objPHPExcel->getActiveSheet()->setCellValue('C'.(6+$key),number_format($da->harga));
-            $objPHPExcel->getActiveSheet()->getStyle('C'.(6+$key))->getNumberFormat()->setFormatCode('#,##0');
-            $objPHPExcel->getActiveSheet()->setCellValue('D'.(6+$key),$tgl);
+            $objPHPExcel->getActiveSheet()->setCellValue('A'.(4+$key),$da->inventory_umum);
+            $objPHPExcel->getActiveSheet()->setCellValue('B'.(4+$key),$da->title_spesifik);
+            $objPHPExcel->getActiveSheet()->setCellValue('C'.(4+$key),$type2);
+            $objPHPExcel->getActiveSheet()->setCellValue('D'.(4+$key),$jenis2);
+            $objPHPExcel->getActiveSheet()->setCellValue('E'.(4+$key),$brand);
+            $objPHPExcel->getActiveSheet()->setCellValue('F'.(4+$key),$satuan);
+            $objPHPExcel->getActiveSheet()->setCellValue('G'.(4+$key),$da->harga);
+            $objPHPExcel->getActiveSheet()->getStyle('G'.(4+$key))->getNumberFormat()->setFormatCode('#,##0');
+            
            }
       
       $objPHPExcel->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
       $objPHPExcel->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
       $objPHPExcel->getActiveSheet()->getColumnDimension('C')->setAutoSize(true);
       $objPHPExcel->getActiveSheet()->getColumnDimension('D')->setAutoSize(true);
+      $objPHPExcel->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
+      $objPHPExcel->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
+      $objPHPExcel->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
+      
       
       
       $objPHPExcel->setActiveSheetIndex(0);

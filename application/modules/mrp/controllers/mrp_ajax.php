@@ -2539,14 +2539,17 @@ function update_rg($id_mrp_receiving_goods_po = 0){
      
     }else{
       $kirim = array( 
-        "id_mrp_inventory_spesifik"         => $get_task_order_asset[$ky][0]->id_mrp_inventory_spesifik,
-        "id_mrp_satuan"                     => $get_task_order_asset[$ky][0]->id_mrp_satuan,   
+        "id_mrp_inventory_spesifik"         => $get_task_order_asset[$no_rg][0]->id_mrp_inventory_spesifik,
+        "id_mrp_satuan"                     => $get_task_order_asset[$no_rg][0]->id_mrp_satuan,   
         "stock_in"                          => $arr_rg[$no_rg],
         "status"                            => 1,
         "create_by_users"                   => $this->session->userdata("id"),
         "create_date"                       => date("Y-m-d H:i:s")
       );
      $id_stock[$ky] = $this->global_models->insert("mrp_stock", $kirim);
+     
+     $krm= array("id_mrp_stock" => $id_stock[$ky]);
+     $this->global_models->update("mrp_receiving_goods_detail", array("id_mrp_receiving_goods_detail" => $dt_id_stock[$no_rg]),$krm);
      
      $this->olah_stock_in_code($kode);
      $kirim = array(
@@ -2733,6 +2736,9 @@ function update_rg($id_mrp_receiving_goods_po = 0){
         "create_date"                       => date("Y-m-d H:i:s")
       );
      $id_stock = $this->global_models->insert("mrp_stock", $kirim);
+     
+     $krm= array("id_mrp_stock" => $id_stock);
+     $this->global_models->update("mrp_receiving_goods_detail", array("id_mrp_receiving_goods_detail" => $dt_id_stock),$krm);
      
      $this->olah_stock_in_code($kode);
      $kirim = array(
@@ -3778,15 +3784,147 @@ function set_rg_department($id_mrp_receiving_goods_po = 0,$id_mrp_request = 0,$i
     die;
   }
   
-  function cancel_rg(){
+  function cancel_rg($dt2_kode ="", $dt2_note = ""){
       $pst = $_REQUEST;
-      print_r($pst);
-      die;
-    $kode = $pst['kode'];
-    $note = $pst['note'];
- 
+      
+//      print_r($pst);
+//      die;
+      
+     if($dt2_kode){
+         $kode = $dt2_kode;
+     }else{
+         $kode = $pst['kode'];
+     }
     
-  }
+     if($dt2_note){
+         $note = $dt2_note;
+     }else{
+         $note = $pst['note'];
+     }
+    
+    $this->db->trans_begin();
+    $jl =$this->global_models->get_query("SELECT COUNT(A.id_mrp_receiving_goods) AS total,A.id_mrp_inventory_spesifik"
+            . " FROM mrp_receiving_goods_detail AS A"
+            . " LEFT JOIN mrp_receiving_goods AS B ON A.id_mrp_receiving_goods = B.id_mrp_receiving_goods"
+            . " WHERE B.code='{$kode}' AND A.status=1 ");
+            
+    $total = $jl[0]->total;
+    $progress = ceil(1/$total * 100);
+    
+   $get_mrp_rg = $this->global_models->get_query("SELECT A.note,A.code,A.id_mrp_receiving_goods,B.id_mrp_receiving_goods_department,A.id_mrp_receiving_goods_po"
+            . " FROM mrp_receiving_goods AS A"
+            . " LEFT JOIN mrp_receiving_goods_department AS B ON A.code = B.code"
+            . " WHERE A.code='{$kode}'");
+        
+    if($get_mrp_rg[0]->note){
+        $dt_note = $get_mrp_rg[0]->note."<br> Note Cancel:".$note;
+    }else{
+        $dt_note = "Note Cancel:".$note;
+    }
+    
+       
+    if($pst['note']){
+    $this->global_models->update("mrp_receiving_goods",array("code" => "{$get_mrp_rg[0]->code}"),array("note_cancel" =>"{$dt_note}"));
+    $this->global_models->update("mrp_receiving_goods_department",array("code" => "{$get_mrp_rg[0]->code}"),array("note_cancel" =>"{$dt_note}"));
+    }
+    
+    if($progress == 100){
+    $id_mrp_po2 =$this->global_models->get_field("mrp_receiving_goods_po","id_mrp_po",array("id_mrp_receiving_goods_po" =>$get_mrp_rg[0]->id_mrp_receiving_goods_po));
+    $this->global_models->update("mrp_po",array("id_mrp_po" => "{$id_mrp_po2}"),array("status" => 6));
+    $this->global_models->update("mrp_receiving_goods",array("code" => "{$get_mrp_rg[0]->code}"),array("status" => 2));
+    $this->global_models->update("mrp_receiving_goods_department",array("code" => "{$get_mrp_rg[0]->code}"),array("status" => 2));
+    
+    $krm2 = array(
+        "status"                            => 7,
+        "update_by_users"                   => $this->session->userdata("id"),
+        "update_date"                       => date("Y-m-d H:i:s")
+    );
+     $this->global_models->update("mrp_receiving_goods_po", array("id_mrp_receiving_goods_po" => $get_mrp_rg[0]->id_mrp_receiving_goods_po),$krm2);
+        
+    }
+//    $get_rg_detail = $this->global_models->get("mrp_receiving_goods_detail",array("id_mrp_receiving_goods" => "{$get_mrp_rg[0]->id_mrp_receiving_goods}"));
+    
+    $get_rg_detail =$this->global_models->get_query("SELECT A.id_mrp_inventory_spesifik,A.jumlah,A.id_mrp_receiving_goods_detail,B.id_mrp_stock_in,C.id_mrp_stock_out"
+            . " FROM mrp_receiving_goods_detail AS A"
+            . " LEFT JOIN mrp_stock_in AS B ON A.id_mrp_receiving_goods_detail = B.id_mrp_receiving_goods_detail"
+            . " LEFT JOIN mrp_stock_out AS C ON B.id_mrp_stock_in = C.id_mrp_stock_in"
+            . " WHERE A.id_mrp_receiving_goods='{$get_mrp_rg[0]->id_mrp_receiving_goods}' AND A.id_mrp_inventory_spesifik='{$jl[0]->id_mrp_inventory_spesifik}' AND A.status=1 ");
+      
+            $id = $this->global_models->get_field("mrp_receiving_goods_po", "id_mrp_task_orders",array("id_mrp_receiving_goods_po" => "{$get_mrp_rg[0]->id_mrp_receiving_goods_po}"));
+    
+    foreach ($get_rg_detail as $k => $v) {
+        
+        $data2 = $this->global_models->get_query("SELECT B.id_hr_pegawai,A.id_mrp_request,"
+        . "C.jumlah,C.rg,C.id_mrp_request_asset,D.id_hr_master_organisasi,D.id_hr_company,C.id_mrp_inventory_spesifik"
+        . " FROM mrp_task_orders_request AS A"
+        . " INNER JOIN mrp_request AS B ON A.id_mrp_request = B.id_mrp_request"
+        . " INNER JOIN mrp_request_asset AS C ON B.id_mrp_request = C.id_mrp_request"
+        . " INNER JOIN hr_pegawai AS D ON B.id_hr_pegawai = D.id_hr_pegawai"
+        . " WHERE A.id_mrp_task_orders='{$id}' AND C.id_mrp_inventory_spesifik='{$v->id_mrp_inventory_spesifik}' "
+        );  
+        foreach ($data2 as $val) {
+//         $val->rg
+        $ttal = $this->global_models->get_field("mrp_report","jumlah",array("id_hr_pegawai" => $val->id_hr_pegawai,"id_mrp_stock_out" => "{$v->id_mrp_stock_out}","id_mrp_inventory_spesifik" => "{$v->id_mrp_inventory_spesifik}"));
+//        print $this->db->last_query();
+//        die;
+        if($ttal){
+        $rg_dept = $val->rg - $ttal;
+        $krm2 = array(
+            "rg"                                => $rg_dept,
+            "update_by_users"                   => $this->session->userdata("id"),
+            "update_date"                       => date("Y-m-d H:i:s")
+        );
+            
+        $this->global_models->update("mrp_request_asset", array("id_mrp_request_asset" => $val->id_mrp_request_asset),$krm2);
+        $this->global_models->update("mrp_request", array("id_mrp_request" => $val->id_mrp_request), array("status" => 6));   
+    
+        }
+        
+        
+        }
+    
+    $this->global_models->update("mrp_stock_out",array("id_mrp_stock_out" =>"{$v->id_mrp_stock_out}"),array("status" => 15));
+    $this->global_models->update("mrp_report",array("id_mrp_stock_out" =>"{$v->id_mrp_stock_out}"),array("status" => 15));
+    }
+    
+    $total = $this->global_models->get_field("mrp_receiving_goods_po_asset","rg",array("id_mrp_receiving_goods_po" => "{$get_mrp_rg[0]->id_mrp_receiving_goods_po}","id_mrp_inventory_spesifik" => "{$get_rg_detail[0]->id_mrp_inventory_spesifik}"));
+    $rg =$total - $get_rg_detail[0]->jumlah;
+//    print $rg."<br>";
+     
+    $this->global_models->update("mrp_receiving_goods_po_asset",array("id_mrp_receiving_goods_po" =>"{$get_mrp_rg[0]->id_mrp_receiving_goods_po}","id_mrp_inventory_spesifik" => "{$get_rg_detail[0]->id_mrp_inventory_spesifik}"),array("rg" => "{$rg}"));
+    
+    $this->global_models->update("mrp_receiving_goods_detail_department",array("id_mrp_receiving_goods_department" =>"{$get_mrp_rg[0]->id_mrp_receiving_goods_department}","id_mrp_inventory_spesifik" => "{$get_rg_detail[0]->id_mrp_inventory_spesifik}"),array("status" => "2"));
+   
+    $this->global_models->update("mrp_stock_in",array("id_mrp_stock_in" =>"{$get_rg_detail[0]->id_mrp_stock_in}"),array("status" => 15));
+    
+    $this->global_models->update("mrp_receiving_goods_detail",array("id_mrp_receiving_goods_detail" =>"{$get_rg_detail[0]->id_mrp_receiving_goods_detail}"),array("status" => 2));
+    
+    
+    
+//    print $this->db->last_query();
+//     die;
+     
+    
+    if ($this->db->trans_status() === FALSE)
+        {
+           $this->db->trans_rollback();
+        }
+    else
+        {
+           $this->db->trans_commit();
+        }
+       
+    $return = array(
+      "status"          => 1,
+      "kode"            => $kode,
+      "note"            => $note,
+      "progress"        => $progress,
+    );
+    
+    print json_encode($return);
+    die;
+    
+    }
   
     function get_mrp_detail_rg($id_mrp_receiving_goods_po = 0,$start = 0){
       
@@ -3795,7 +3933,7 @@ function set_rg_department($id_mrp_receiving_goods_po = 0,$id_mrp_request = 0,$i
 //      $where = " WHERE A.status =6";
         $where = " WHERE A.id_mrp_receiving_goods_po ='{$id_mrp_receiving_goods_po}'";
         $data = $this->global_models->get_query("SELECT A.code,"
-        . " B.code AS code_rg,B.note,B.tanggal_diterima,B.id_mrp_receiving_goods,B.create_date,B.status,"
+        . " B.code AS code_rg,B.note,B.note_cancel,B.tanggal_diterima,B.id_mrp_receiving_goods,B.create_date,B.status,"
         . " C.name"
         . " FROM mrp_receiving_goods_po AS A"
         . " LEFT JOIN mrp_receiving_goods AS B ON A.id_mrp_receiving_goods_po = B.id_mrp_receiving_goods_po"
@@ -3831,18 +3969,19 @@ function set_rg_department($id_mrp_receiving_goods_po = 0,$id_mrp_request = 0,$i
             $tanggal_dibuat = "";
         }
         
-        if($da->status < 9){
+        if($da->status == 1){
              $btn_cancel = "<a href='javascript:void(0)' data-toggle='modal' type='button' class='btn btn-rg-hide btn-danger btn-sm' title='Delete' data-target='#edit-keterangan-cancel' isi='{$da->code_rg}' id='id-rg-cancel' ><i class='fa fa-trash-o'></i></a>"; 
-            
-        }elseif($da->status == 9){
+           $note = nl2br($da->note);
+        }else{
             $btn_cancel = "<span class='label bg-red'>Cancel</span>";
+            $note = nl2br($da->note_cancel);
         }
         
         $hasil[] = array(
         "<a data-toggle='collapse' data-parent='#accordion'  href='#collapseOne' onclick='coba_data({$da->id_mrp_receiving_goods});'>".$da->code_rg."</a>",
         $tanggal_dibuat,
         $tgl,
-        nl2br($da->note)
+        $note
             . "<script>"
             . "function coba_data(id){"
                 . 'var table = '

@@ -89,6 +89,21 @@
                     </div>
                      
               </div>
+                
+                <div class="row">
+                <div class="control-group">
+                    <div class="col-xs-6">
+               <label>Desimal</label>
+               <!--<input type="checkbox" class="ppn" />-->
+                <?php 
+                print $this->form_eksternal->form_dropdown("desimal", $array_cek, 
+                    $data->flag_desimal, 'id="desimal" class="form-control dropdown2 input-sm"');?>
+               
+                   
+             </div>
+                    </div>
+                     
+              </div>
                 <?php print $this->form_eksternal->form_open("", 'role="form"', 
           array("id_detail" => $id_mrp_po))?>
                 <br>

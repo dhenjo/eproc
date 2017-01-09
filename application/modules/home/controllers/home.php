@@ -10,6 +10,9 @@ class Home extends MX_Controller {
   }
   
   function tes(){
+      $type_array = $this->global_models->get_dropdown("mrp_type_inventory", "id_mrp_type_inventory", "code", FALSE, array("status" => "1")); 
+      print_r($type_array);
+      die;
       $get = $this->global_models->get("m_users",array("id_users IS NOT NULL" => NULL));
       print $this->db->last_query();
       die;

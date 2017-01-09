@@ -629,7 +629,7 @@ function insert_task_orders(){
     
     foreach ($data AS $da){
         
-        if($da->type_inventory == 1){
+         if($da->type_inventory == 1){
             $dt_link = "mrp/add-request-pengadaan-cetakan/{$da->id_mrp_request}";
         }elseif($da->type_inventory == 2){
             $dt_link = "mrp/add-request-pengadaan-atk/{$da->id_mrp_request}";
@@ -645,6 +645,9 @@ function insert_task_orders(){
             $dt_link = "mrp/mrp-request/add-request-pengadaan-promosi/{$da->id_mrp_request}";
         }elseif($da->type_inventory == 9){
             $dt_link = "mrp/mrp-request/add-request-pengadaan-umum/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 10){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-cetakan-invoice/{$da->id_mrp_request}";
+            
         }
         
 //        $type = array(1 => "Cetakan", 2 => "ATK");
@@ -1247,7 +1250,7 @@ function proses_mutasi_stock($id_mrp_task_orders = 0){
       
       $where = " WHERE A.id_mrp_task_orders = {$id_mrp_task_orders} AND C.id_mrp_inventory_spesifik ={$id_mrp_inventory_spesifik}";
       
-      $data = $this->global_models->get_query("SELECT E.name AS users,G.name AS create_users,F.code AS organisasi,C.jumlah"
+      $data = $this->global_models->get_query("SELECT B.id_mrp_request,B.code AS code_ro,B.type_inventory,E.name AS users,G.name AS create_users,F.code AS organisasi,C.jumlah"
         . " FROM mrp_task_orders_request AS A"
         . " LEFT JOIN mrp_request AS B ON A.id_mrp_request = B.id_mrp_request"
         . " LEFT JOIN mrp_request_asset AS C ON B.id_mrp_request = C.id_mrp_request"
@@ -1295,13 +1298,34 @@ function proses_mutasi_stock($id_mrp_task_orders = 0){
             }else{
                 $jumlah = 0;
             }
+             if($da->type_inventory == 1){
+            $dt_link = "mrp/add-request-pengadaan-cetakan/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 2){
+            $dt_link = "mrp/add-request-pengadaan-atk/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 3){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-komputer/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 4){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-technical/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 5){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-service/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 7){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-office/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 8){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-promosi/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 9){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-umum/{$da->id_mrp_request}";
+        }elseif($da->type_inventory == 10){
+            $dt_link = "mrp/mrp-request/add-request-pengadaan-cetakan-invoice/{$da->id_mrp_request}";
             
-           
+        }
+           $link = "<a href='".site_url($dt_link)."' target='_blank'>{$da->code_ro}</a>";
+
           $hasil[] = array(
            
             $da->users,
             $jumlah,
-            $da->create_users  
+            $da->create_users,
+             $link 
             );
         }
     $return['hasil'] = $hasil;

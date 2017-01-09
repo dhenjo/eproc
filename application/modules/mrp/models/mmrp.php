@@ -240,7 +240,7 @@ function rg_all($id_mrp_receiving_goods_po = 0,$id_mrp_receiving_goods = 0,$tgl_
 
  function data_rekap_pembayaran(){
 //       $where = " B.id_hr_company ='{$this->session->userdata("report_bulanan_search_id_company")}' ";
-     $where = "B.status != 15 ";
+     $where = "B.status < 15 ";
     
     if($this->session->userdata("report_bulanan_search_id_company")){
          $where .= " AND B.id_hr_company ='{$this->session->userdata("report_bulanan_search_id_company")}'";
@@ -557,7 +557,7 @@ function rekap_pembayaran_xls($filename){
         . " LEFT JOIN mrp_receiving_goods AS H ON G.id_mrp_receiving_goods = H.id_mrp_receiving_goods"
         . " LEFT JOIN mrp_receiving_goods_po AS I ON H.id_mrp_receiving_goods_po = I.id_mrp_receiving_goods_po"
         . " LEFT JOIN mrp_po AS J ON I.id_mrp_po = J.id_mrp_po"               
-        . " WHERE B.id_hr_master_organisasi = {$da->id_hr_master_organisasi} AND {$where} $supplier $id_mrp_po"
+        . " WHERE B.status < 15 AND B.id_hr_master_organisasi = {$da->id_hr_master_organisasi} AND {$where} $supplier $id_mrp_po"
         . " GROUP BY B.id_hr_master_organisasi,YEAR(B.tanggal), MONTH(B.tanggal)"
          );
         
@@ -865,6 +865,7 @@ function rekap_pembayaran_xls($filename){
             
          $kirim = array(
             "id_mrp_receiving_goods_department"     => $id_rg_department,
+            "id_mrp_stock"                          => $data[0]->id_mrp_stock, 
             "id_mrp_satuan"                         => $data[0]->id_mrp_satuan,
             "jumlah"                                => $jml,
             "id_mrp_inventory_spesifik"             => $id_mrp_inventory_spesifik,
@@ -1642,7 +1643,7 @@ function proses_mutasi_stock($id_mrp_request = 0,$id_mrp_inventory_spesifik = 0,
         . " LEFT JOIN mrp_inventory_umum AS F ON E.id_mrp_inventory_umum = F.id_mrp_inventory_umum"       
         . " LEFT JOIN mrp_receiving_goods_po AS C ON A.id_mrp_po = C.id_mrp_po"
         . " LEFT JOIN mrp_receiving_goods_department AS D ON C.id_mrp_receiving_goods_po = D.id_mrp_receiving_goods_po"
-        . " {$where}"
+        . " {$where} AND D.status=1"
         . " GROUP BY A.id_mrp_po"
         . " ORDER BY D.tanggal_diterima ASC"
         );

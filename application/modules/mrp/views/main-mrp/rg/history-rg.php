@@ -21,7 +21,7 @@
                     <tr>
                         <th style="width: 100px">Kode</th>
                         <th style="width: 150px">Tanggal Dibuat RG</th>
-                        <th style="width: 150px">Tanggal Diterima</th>
+                        <th style="width: 120px">Tanggal Diterima</th>
                         <th>Note</th>
                         <th>Created By Users</th>
                         <th></th>
@@ -42,7 +42,7 @@
                     </tr>
                   </tfoot>-->
                 </table>
-                  <div class="box-body" id="dta-bar-history">
+                  <div class="box-body" id="dta-bar-history" style="display:none">
                   <!--<div class="box-body" style="display: none;" id="dta-bar">-->
                 <img width="35px" src="<?php print $url?>img/ajax-loader.gif" /> Wait Proses<div style="padding-left:15%;margin-top: -3%" id="no_proses_history">1</div>%
                 <div class="progress progress-striped active">

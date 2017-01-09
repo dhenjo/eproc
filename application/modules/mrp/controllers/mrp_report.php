@@ -1110,7 +1110,7 @@ class Mrp_report extends MX_Controller {
         $this->mmrp->export_report_po_merger_xls("Report PO");
         }
         
-		if($pst['supplier']){
+	if($pst['supplier']){
                $id_supplier = $pst['id_supplier'];
            }else{
                $id_supplier = 0;

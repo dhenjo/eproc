@@ -678,7 +678,7 @@ public function update_po($id_mrp_task_orders = 0,$id_mrp_po = 0){
             );
     $this->global_models->update("mrp_po_asset", array("id_mrp_task_orders" => $id_mrp_task_orders, "status" => "2"),$kirim3);
 
-      $data = $this->global_models->get_query("SELECT SUM(B.jumlah) AS jml,SUM(B.jumlah*B.harga) AS total,A.discount,A.ppn,A.id_mrp_po,B.id_mrp_supplier,C.name AS nama_supplier,A.id_hr_company,D.title AS nama_perusahaan"
+      $data = $this->global_models->get_query("SELECT SUM(B.jumlah) AS jml,SUM(B.jumlah*B.harga) AS total,A.discount,A.flag_desimal,A.ppn,A.id_mrp_po,B.id_mrp_supplier,C.name AS nama_supplier,A.id_hr_company,D.title AS nama_perusahaan"
         . ",A.create_by_users,A.flag_desimal"
         . " FROM mrp_po AS A"
         . " LEFT JOIN mrp_po_asset AS B ON A.id_mrp_po = B.id_mrp_po"

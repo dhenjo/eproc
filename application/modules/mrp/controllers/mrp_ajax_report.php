@@ -240,7 +240,7 @@ class Mrp_ajax_report extends MX_Controller {
         . " LEFT JOIN mrp_receiving_goods AS H ON G.id_mrp_receiving_goods = H.id_mrp_receiving_goods"
         . " LEFT JOIN mrp_receiving_goods_po AS I ON H.id_mrp_receiving_goods_po = I.id_mrp_receiving_goods_po"
         . " LEFT JOIN mrp_po AS J ON I.id_mrp_po = J.id_mrp_po"
-        . " WHERE {$where} $supplier $id_mrp_po"
+        . " WHERE B.status < 15 AND {$where} $supplier $id_mrp_po"
         . " GROUP BY A.id_hr_master_organisasi"
 //        . " GROUP BY A.id_hr_master_organisasi,YEAR(B.tanggal), MONTH(B.tanggal)"
 //        . " ORDER BY concat(D.name,C.title,B.harga) ASC"
@@ -277,7 +277,7 @@ class Mrp_ajax_report extends MX_Controller {
         . " LEFT JOIN mrp_receiving_goods AS H ON G.id_mrp_receiving_goods = H.id_mrp_receiving_goods"
         . " LEFT JOIN mrp_receiving_goods_po AS I ON H.id_mrp_receiving_goods_po = I.id_mrp_receiving_goods_po"
         . " LEFT JOIN mrp_po AS J ON I.id_mrp_po = J.id_mrp_po"        
-        . " WHERE B.id_hr_master_organisasi = {$da->id_hr_master_organisasi} AND {$where} $supplier $id_mrp_po"
+        . " WHERE B.status < 15 AND B.id_hr_master_organisasi = {$da->id_hr_master_organisasi} AND {$where} $supplier $id_mrp_po"
         . " GROUP BY B.id_hr_master_organisasi,YEAR(B.tanggal), MONTH(B.tanggal)"
          );
 
@@ -404,7 +404,7 @@ class Mrp_ajax_report extends MX_Controller {
         . " LEFT JOIN mrp_inventory_umum AS F ON E.id_mrp_inventory_umum = F.id_mrp_inventory_umum"
         . " LEFT JOIN mrp_receiving_goods_po AS C ON A.id_mrp_po = C.id_mrp_po"
         . " LEFT JOIN mrp_receiving_goods_department AS D ON C.id_mrp_receiving_goods_po = D.id_mrp_receiving_goods_po"
-        . " {$where}"
+        . " {$where} AND D.status=1"
         . " GROUP BY A.id_mrp_po"
         . " ORDER BY D.tanggal_diterima ASC"
         . " LIMIT {$start}, 7");

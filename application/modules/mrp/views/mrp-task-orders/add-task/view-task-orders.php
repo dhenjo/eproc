@@ -123,6 +123,7 @@ if($id_mrp_task_orders){
                         <th>Users</th>
                         <th>Jumlah</th>
                         <th>Created<br>By Users</th>
+                        <th>Code<br>RO</th>
                     </tr>
                   </thead>
                   <tbody id="data_list">

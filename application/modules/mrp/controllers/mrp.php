@@ -2273,30 +2273,32 @@ $pdf->Output("PO_".$detail[0]->no_po, 'I');
               . "$(document).on('click', '#btn-delete', function(evt){"
                 . "var dkode =$('#kode_mrp_rg').val();"
                
-                . "var note =$('#note_delete').val();"
+//                . "var note =encodeURIComponent($('#note_delete').val());"
+            . "var note =$('#note_delete').val();"
                 . "$('.btn-rg-hide').hide();"
             
                 ."var dataString2 = 'note='+ note+'&kode='+dkode;"
-                
+//                . "alert(dataString2);"
+                ."$('#dta-bar-history').show();"
                 ."$.ajax({"
-                ."type : 'GET',"
+                ."type : 'POST',"
                 ."url : '".site_url("mrp/mrp-ajax/cancel-rg/")."',"
                 ."data: dataString2,"
                 ."dataType : 'html',"
                 ."success: function(data) {"
-//                    . 'var hasil = $.parseJSON(data);'
-//                    . "if(hasil.progress == 100){"
-//                        ."$('#dta-bar-history').hide();"
-//                        . "$('#bar_proses_history').width(hasil.progress+'%');"
-//                        . "$('#no_proses_history').text(hasil.progress);"
-//                        . "$('#show-bars-history').text(hasil.progress);"
+                    . 'var hasil = $.parseJSON(data);'
+                    . "if(hasil.progress == 100){"
+                        ."$('#dta-bar-history').hide();"
+                        . "$('#bar_proses_history').width(hasil.progress+'%');"
+                        . "$('#no_proses_history').text(hasil.progress);"
+                        . "$('#show-bars-history').text(hasil.progress);"
 //                        ."window.location ='{$url2}'"
-//                    . "}else{"
-//                        . "proses_data({$id_mrp_receiving_goods_po},hasil.id_rg, hasil.number);"
-//                        . "$('#bar_proses_history').width(hasil.progress+'%');"
-//                        . "$('#no_proses_history').text(hasil.progress);"
-//                        . "$('#show-bars-history').text(hasil.progress);"        
-//                    . "}"
+                    . "}else{"
+                        . "proses_data_cancel(hasil.kode, decodeURIComponent(hasil.note));"
+                        . "$('#bar_proses_history').width(hasil.progress+'%');"
+                        . "$('#no_proses_history').text(hasil.progress);"
+                        . "$('#show-bars-history').text(hasil.progress);"        
+                    . "}"
                 ."},"
              ."});"
               . "});"  
@@ -2350,7 +2352,6 @@ $pdf->Output("PO_".$detail[0]->no_po, 'I');
            
             . "var tgl_diterima = $('#tgl_diterima').val();"
                 . "if(tgl_diterima ==''){"
-                    . "alert('Tanggal diterima tidak boleh kosong');"
                     ."window.location ='{$url2}'"
                 . "}"
             . "var dt_note = $('#note').val();"
@@ -2358,7 +2359,8 @@ $pdf->Output("PO_".$detail[0]->no_po, 'I');
             
                                   
             ."var dataString2 = 'id_mrp_receiving_goods_po_asset='+ aData2 +'&rg=' + aData +'&tgl_diterima='+tgl_diterima+'&note='+dt_note;"
-                ."$.ajax({"
+//            ."alert(dataString2);"  
+            ."$.ajax({"
                 ."type : 'POST',"
                 ."url : '".site_url("mrp/mrp-ajax/update-rg/{$id_mrp_receiving_goods_po}")."',"
                 ."data: dataString2,"
@@ -2416,7 +2418,30 @@ $pdf->Output("PO_".$detail[0]->no_po, 'I');
           . '}'
         . '});'
       . '}'
-                                         
+    //tab RG            
+    . "function proses_data_cancel(kode,note){"
+        . '$.post("'.site_url("mrp/mrp-ajax/cancel-rg/").'/"+kode+"/"+note, function(data){'
+          . 'var hasil = $.parseJSON(data);'
+          . 'if(hasil.progress == 100){'
+             ."$('#dta-bar').hide();"
+             . "$('#bar_proses_history').width(hasil.progress+'%');"
+             . "$('#no_proses_history').text(hasil.progress);"
+             . "$('#show-bars-history').text(hasil.progress);"
+            ."window.location ='{$url2}'"
+             . '}'
+          . 'else{'
+             . 'proses_data_cancel(hasil.kode,hasil.note);'
+             . "$('#bar_proses_history').width(hasil.progress+'%');"
+             . "$('#no_proses_history').text(hasil.progress);"
+             . "$('#show-bars-history').text(hasil.progress);"       
+//            . '$("#loader-page").hide();'
+//            . 'load_tooltip();'
+//            . 'load_tooltip_harga();'
+//            . "$('#script-tambahan').html(hasil.dt_total);"
+          . '}'
+        . '});'
+    . "}"
+                    
     . "function proses_data(id_mrp_receiving_goods_po,id_rg,number){"
         . '$.post("'.site_url("mrp/mrp-ajax/set-rg/").'/"+id_mrp_receiving_goods_po+"/"+id_rg+"/"+number, function(data){'
           . 'var hasil = $.parseJSON(data);'

@@ -8,37 +8,46 @@ class Engine extends MX_Controller {
 //    $this->debug($this->menu, true);
   }
   
-  function cancel_rg_new(){
+  function cancel_rg(){
       $pst = $_REQUEST;
       print_r($pst);
       die;
+      
     $kode = $pst['kode'];
     $note = "Note Cancel:".$pst['note'];
     $this->db->trans_begin();
+    $jl =$this->global_models->get_query("SELECT COUNT(A.id_mrp_receiving_goods) AS total"
+            . " FROM mrp_receiving_goods_detail AS A"
+            . " LEFT JOIN mrp_receiving_goods AS B ON A.id_mrp_receiving_goods = B.id_mrp_receiving_goods"
+            . " WHERE A.code='{$kode}' AND A.status=1 ");    
+    $total = $jl[0]->total;
+    $progress = ceil(1/$total * 100);
     
    $get_mrp_rg = $this->global_models->get_query("SELECT A.code,A.id_mrp_receiving_goods,B.id_mrp_receiving_goods_department,A.id_mrp_receiving_goods_po"
             . " FROM mrp_receiving_goods AS A"
             . " LEFT JOIN mrp_receiving_goods_department AS B ON A.code = B.code"
             . " WHERE A.code='{$kode}'");
-            
+        
     if($get_mrp_rg[0]->note){
-        $dt_note = $get_mrp_rg[0]->note."<br>".$note;
+        $dt_note = $get_mrp_rg[0]->note."<br> Note Cancel: ".$note;
     }else{
-        $dt_note = $note;
+        $dt_note = "Note Cancel:".$note;
     }
     
+    if($progress == 100){
     $this->global_models->update("mrp_receiving_goods",array("code" => "{$get_mrp_rg[0]->code}"),array("status" => 2,"note" =>"{$dt_note}"));
-    $this->global_models->update("mrp_receiving_goods_department",array("code" => "{$get_mrp_rg[0]->code}"),array("status" => 2));
-    
+    $this->global_models->update("mrp_receiving_goods_department",array("code" => "{$get_mrp_rg[0]->code}"),array("status" => 2,"note" =>"{$dt_note}"));
+    }
 //    $get_rg_detail = $this->global_models->get("mrp_receiving_goods_detail",array("id_mrp_receiving_goods" => "{$get_mrp_rg[0]->id_mrp_receiving_goods}"));
     
     $get_rg_detail =$this->global_models->get_query("SELECT A.id_mrp_inventory_spesifik,A.id_mrp_receiving_goods_detail,B.id_mrp_stock_in,C.id_mrp_stock_out"
             . " FROM mrp_receiving_goods_detail AS A"
             . " LEFT JOIN mrp_stock_in AS B ON A.id_mrp_receiving_goods_detail = B.id_mrp_receiving_goods_detail"
             . " LEFT JOIN mrp_stock_out AS C ON B.id_mrp_stock_in = C.id_mrp_stock_in"
-            . " WHERE A.id_mrp_receiving_goods='{$get_mrp_rg[0]->id_mrp_receiving_goods}' ");
-            
-    $this->global_models->update("mrp_receiving_goods_detail",array("id_mrp_receiving_goods_detail" => "{$get_rg_detail[0]->id_mrp_receiving_goods_detail}"),array("status" => 2));
+            . " WHERE A.id_mrp_receiving_goods='{$get_mrp_rg[0]->id_mrp_receiving_goods}' AND A.status=1 ");
+        
+    print $asc = $this->db->last_query();
+    
     $total = $this->global_models->get_field("mrp_receiving_goods_po_asset","rg",array("id_mrp_receiving_goods_po" => "{$get_mrp_rg[0]->id_mrp_receiving_goods_po}","id_mrp_inventory_spesifik" => "{$get_rg_detail[0]->id_mrp_inventory_spesifik}"));
     $rg =$total -$get_rg_detail[0]->jumlah;
     $this->global_models->update("mrp_receiving_goods_po_asset",array("id_mrp_receiving_goods_po" =>"{$get_mrp_rg[0]->id_mrp_receiving_goods_po}","id_mrp_inventory_spesifik" => "{$get_rg_detail[0]->id_mrp_inventory_spesifik}"),array("rg" => "{$rg}"));
@@ -48,6 +57,8 @@ class Engine extends MX_Controller {
     $this->global_models->update("mrp_stock_in",array("id_mrp_stock_in" =>"{$get_rg_detail[0]->id_mrp_stock_in}"),array("status" => 15));
     $this->global_models->update("mrp_stock_out",array("id_mrp_stock_out" =>"{$get_rg_detail[0]->id_mrp_stock_out}"),array("status" => 15));
     $this->global_models->update("mrp_report",array("id_mrp_stock_out" =>"{$get_rg_detail[0]->id_mrp_stock_out}"),array("status" => 15));
+    $this->global_models->update("mrp_receiving_goods_detail",array("id_mrp_receiving_goods_detail" =>"{$get_rg_detail[0]->id_mrp_receiving_goods_detail}"),array("status" => 2));
+    
     
     $id = $this->global_models->get_field("mrp_receiving_goods_po", "id_mrp_task_orders",array("id_mrp_receiving_goods_po" => "{$get_mrp_rg[0]->id_mrp_receiving_goods_po}"));
     
@@ -62,10 +73,9 @@ class Engine extends MX_Controller {
      foreach ($data2 as $val) {
 //         $val->rg
         $ttal = $this->global_models->get_field("mrp_report","jumlah",array("id_hr_pegawai" => $val->id_hr_pegawai,"id_mrp_inventory_spesifik" => "{$val->id_mrp_inventory_spesifik}"));
-            $rg_dept = $val->rg - $ttal;
-            $krm2 = array(
+        $rg_dept = $val->rg - $ttal;
+        $krm2 = array(
             "rg"                                => $rg_dept,
-                
             "update_by_users"                   => $this->session->userdata("id"),
             "update_date"                       => date("Y-m-d H:i:s")
         );
@@ -74,16 +84,27 @@ class Engine extends MX_Controller {
         
         $this->global_models->update("mrp_request", array("id_mrp_request" => $val->id_mrp_request), array("status" => 6));   
     }
+    $this->db->trans_rollback();
+    die;
     
-        
     if ($this->db->trans_status() === FALSE)
-     {
-        $this->db->trans_rollback();
-     }
+        {
+          
+        }
     else
-     {
-        $this->db->trans_commit();
-     }
+        {
+           $this->db->trans_commit();
+        }
+       
+    $return = array(
+      "status"          => 1,
+      "kode"            => $kode,
+      "note"            => $note,
+      "progress"        => $progress,
+    );
+    
+    print json_encode($return);
+    die;
     
     }
   
@@ -119,7 +140,7 @@ class Engine extends MX_Controller {
       die;
   }
   
-  function cancel_rg() {
+  function cancel_rg_old() {
 //      $rg_department = $this->global_models->get("mrp_receiving_goods_department");
         while (1) {
           $this->load->model('mrp/mmrp_rg');
