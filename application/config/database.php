@@ -67,7 +67,7 @@ $db['default']['stricton'] = FALSE;
 
 $db['terminal']['hostname'] = 'localhost';
 $db['terminal']['username'] = 'root';
-$db['terminal']['password'] = 'us3rw3b';
+$db['terminal']['password'] = '';
 $db['terminal']['database'] = 'eproc_demo';
 $db['terminal']['dbdriver'] = 'mysql';
 $db['terminal']['dbprefix'] = '';
